@@ -1,0 +1,3 @@
+id,fileName,mimeType,url,licenseId,soundRecordingId,tenantId
+att1,contract1.pdf,application/pdf,https://example.com/contract1.pdf,lic1,,t1
+att2,recording-notes.txt,text/plain,https://example.com/notes.txt,,rec1,t1

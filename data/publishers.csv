@@ -1,0 +1,3 @@
+id,code,name,unitType,priceType,payeeType,currencyId,tenantId
+pub1,PUB001,Sunrise Music Group,UNIT,GROSS,SELF,cur1,t1
+pub2,PUB002,Blue Horizon Publishing,UNIT,GROSS,SELF,cur1,t1

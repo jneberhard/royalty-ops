@@ -1,0 +1,3 @@
+id,assetId,title,isrc,writer,arranger,project,language,releaseDate,length,notes,tenantId,territoryId,subLabelId
+rec1,AST001,Midnight Echoes (Studio),US-DMO-REC-00001,Alex Rivers,L. Hart,Debut Album,English,2024-01-15,215,Lead single,t1,ter1,sl1
+rec2,AST002,Golden Skies (Acoustic),US-DMO-REC-00002,Mia Thompson,,Acoustic Sessions,English,2024-02-10,198,,t1,ter2,sl2

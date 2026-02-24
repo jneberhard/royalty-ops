@@ -1,0 +1,3 @@
+id,licenseId,date,type,status,description,amount,reference,amountDue
+ft1,lic1,2024-03-10,ROYALTY_PAYMENT,COMPLETED,Streaming royalties,1250.75,STMT-2024-03,0
+ft2,lic2,2024-03-12,ROYALTY_PAYMENT,COMPLETED,Mechanical royalties,980.40,STMT-2024-03,0

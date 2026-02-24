@@ -1,0 +1,4 @@
+id,tenantId,publisherId,debit,credit,balanceAfter,description
+le1,t1,pub1,0,750.45,750.45,Royalty credit from Midnight Echoes
+le2,t1,pub2,0,500.30,500.30,Royalty credit from Midnight Echoes
+le3,t1,pub1,0,980.40,1730.85,Royalty credit from Golden Skies

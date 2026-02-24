@@ -1,0 +1,481 @@
+//////////////////////////////////////////////////////
+// GENERATOR + DATASOURCE
+//////////////////////////////////////////////////////
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../node_modules/.prisma/client"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+//////////////////////////////////////////////////////
+// ENUMS
+//////////////////////////////////////////////////////
+
+enum LicenseStatus {
+  ACTIVE
+  HELD
+  CANCELLED
+  PENDING
+}
+
+enum TransactionType {
+  ADJUSTMENT
+  ADVANCE
+  COST
+  ROYALTY_PAYMENT
+  OTHER
+}
+
+enum PayeeType {
+  SELF
+  OTHER
+}
+
+enum RateType {
+  STATUTORY
+  CENT_RATE
+  PERCENT_RECEIPTS
+}
+
+enum ReportStatus {
+  UPLOADED
+  VALIDATING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+//////////////////////////////////////////////////////
+// MULTI-TENANT
+//////////////////////////////////////////////////////
+
+model Tenant {
+  id   String @id @default(cuid())
+  name String
+
+  users              User[]
+  songs              Song[]
+  licenses           License[]
+  recordings         SoundRecording[]
+  products           Product[]
+  publishers         Publisher[]
+  reports            Report[]
+  companies          Company[]
+  subLabels          SubLabel[]
+  territories        Territory[]
+  currencies         Currency[]
+  configurationTypes ConfigurationType[]
+  ledgerEntries      LedgerEntry[]
+  attachments        Attachment[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+//////////////////////////////////////////////////////
+// USERS / ROLES / PERMISSIONS
+//////////////////////////////////////////////////////
+
+model User {
+  id       String  @id @default(cuid())
+  email    String  @unique
+  password String
+  name     String?
+
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id])
+
+  userRoles UserRole[]
+}
+
+model Role {
+  id   String @id @default(cuid())
+  name String @unique
+
+  userRoles       UserRole[]
+  rolePermissions RolePermission[]
+}
+
+model Permission {
+  id   String @id @default(cuid())
+  name String @unique
+
+  rolePermissions RolePermission[]
+}
+
+model UserRole {
+  id     String @id @default(cuid())
+  userId String
+  roleId String
+
+  user User @relation(fields: [userId], references: [id])
+  role Role @relation(fields: [roleId], references: [id])
+
+  @@unique([userId, roleId])
+}
+
+model RolePermission {
+  id           String @id @default(cuid())
+  roleId       String
+  permissionId String
+
+  role       Role       @relation(fields: [roleId], references: [id])
+  permission Permission @relation(fields: [permissionId], references: [id])
+
+  @@unique([roleId, permissionId])
+}
+
+//////////////////////////////////////////////////////
+// MASTER TABLES
+//////////////////////////////////////////////////////
+
+model Company {
+  id       String @id @default(cuid())
+  code     String @unique
+  name     String
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model SubLabel {
+  id       String @id @default(cuid())
+  code     String @unique
+  name     String
+  country  String
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id])
+
+  soundRecordings SoundRecording[]
+  products        Product[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Territory {
+  id       String @id @default(cuid())
+  code     String @unique
+  name     String
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id])
+
+  songs      Song[]
+  licenses   License[]
+  recordings SoundRecording[]
+}
+
+model Currency {
+  id       String @id @default(cuid())
+  code     String
+  country  String
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id])
+
+  publishers Publisher[]
+}
+
+model ConfigurationType {
+  id          String @id @default(cuid())
+  code        String @unique
+  description String
+  tenantId    String
+  tenant      Tenant @relation(fields: [tenantId], references: [id])
+
+  products Product[]
+}
+
+//////////////////////////////////////////////////////
+// PUBLISHER
+//////////////////////////////////////////////////////
+
+model Publisher {
+  id               String    @id @default(cuid())
+  code             String    @unique
+  name             String
+  unitType         String
+  priceType        String
+  paymentFrequency String?
+  currencyId       String
+  agency           Boolean   @default(false)
+  agencyName       String?
+  address          String?
+  payeeType        PayeeType
+  tenantId         String
+  tenant           Tenant    @relation(fields: [tenantId], references: [id])
+
+  currency Currency @relation(fields: [currencyId], references: [id])
+
+  songSplits    SongPublisher[]
+  licenseSplits LicensePublisher[]
+
+  recoupmentBalances RecoupmentBalance[]
+
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  ledgerEntries LedgerEntry[]
+}
+
+//////////////////////////////////////////////////////
+// SONG (Composition)
+//////////////////////////////////////////////////////
+
+model Song {
+  id           String  @id @default(cuid())
+  isrc         String  @unique
+  title        String
+  writer       String
+  arranger     String?
+  artist       String
+  publicDomain Boolean
+  territoryId  String
+  tenantId     String
+  tenant       Tenant  @relation(fields: [tenantId], references: [id])
+
+  territory Territory @relation(fields: [territoryId], references: [id])
+
+  publishers SongPublisher[]
+  licenses   LicenseSong[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model SongPublisher {
+  id          String @id @default(cuid())
+  songId      String
+  publisherId String
+  share       Float
+
+  song      Song      @relation(fields: [songId], references: [id])
+  publisher Publisher @relation(fields: [publisherId], references: [id])
+
+  @@unique([songId, publisherId])
+}
+
+//////////////////////////////////////////////////////
+// SOUND RECORDING
+//////////////////////////////////////////////////////
+
+model SoundRecording {
+  id          String   @id @default(cuid())
+  assetId     String   @unique @default(cuid())
+  title       String
+  isrc        String
+  writer      String?
+  arranger    String?
+  project     String?
+  language    String?
+  releaseDate DateTime
+  length      Int // seconds
+  notes       String?
+
+  subLabelId  String?
+  territoryId String?
+  tenantId    String
+  tenant      Tenant  @relation(fields: [tenantId], references: [id])
+
+  subLabel  SubLabel?  @relation(fields: [subLabelId], references: [id])
+  territory Territory? @relation(fields: [territoryId], references: [id])
+
+  artists     SoundRecordingArtist[]
+  attachments Attachment[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model SoundRecordingArtist {
+  id               String @id @default(cuid())
+  soundRecordingId String
+  name             String
+
+  soundRecording SoundRecording @relation(fields: [soundRecordingId], references: [id])
+}
+
+//////////////////////////////////////////////////////
+// PRODUCT
+//////////////////////////////////////////////////////
+
+model Product {
+  id              String  @id @default(cuid())
+  code            String  @unique
+  configurationId String
+  trackComponents Int
+  tracks          Int
+  subTracks       Int
+  totalTrackTime  Int? // calculated in app logic (seconds)
+  alternateCodes  String?
+  notes           String?
+  barCode         String?
+  subLabelId      String?
+  tenantId        String
+  tenant          Tenant  @relation(fields: [tenantId], references: [id])
+
+  configuration ConfigurationType @relation(fields: [configurationId], references: [id])
+  subLabel      SubLabel?         @relation(fields: [subLabelId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+//////////////////////////////////////////////////////
+// LICENSE
+//////////////////////////////////////////////////////
+
+model License {
+  id           String        @id @default(cuid())
+  number       String
+  description  String?
+  status       LicenseStatus
+  dateReceived DateTime
+  territoryId  String?
+  payee        String?
+  tenantId     String
+  tenant       Tenant        @relation(fields: [tenantId], references: [id])
+
+  territory Territory? @relation(fields: [territoryId], references: [id])
+
+  publishers   LicensePublisher[]
+  songs        LicenseSong[]
+  transactions FinancialTransaction[]
+  attachments  Attachment[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model LicensePublisher {
+  id          String   @id @default(cuid())
+  licenseId   String
+  publisherId String
+  rateType    RateType
+  rateValue   Float
+  share       Float
+
+  license   License   @relation(fields: [licenseId], references: [id])
+  publisher Publisher @relation(fields: [publisherId], references: [id])
+
+  @@unique([licenseId, publisherId])
+}
+
+model LicenseSong {
+  id        String @id @default(cuid())
+  licenseId String
+  songId    String
+
+  license License @relation(fields: [licenseId], references: [id])
+  song    Song    @relation(fields: [songId], references: [id])
+
+  @@unique([licenseId, songId])
+}
+
+//////////////////////////////////////////////////////
+// FINANCIAL TRANSACTIONS / LEDGER
+//////////////////////////////////////////////////////
+
+model FinancialTransaction {
+  id          String          @id @default(cuid())
+  licenseId   String
+  date        DateTime
+  type        TransactionType
+  status      String @default("PENDING") 
+  description String?
+  amount      Float
+  reference   String?
+  amountDue   Float?
+
+  license License @relation(fields: [licenseId], references: [id])
+
+  createdAt DateTime @default(now())
+}
+
+model LedgerEntry {
+  id String @id @default(cuid())
+
+  tenantId    String
+  publisherId String?
+
+  debit        Float
+  credit       Float
+  balanceAfter Float
+  description  String?
+
+  tenant    Tenant     @relation(fields: [tenantId], references: [id])
+  publisher Publisher? @relation(fields: [publisherId], references: [id])
+
+  createdAt DateTime @default(now())
+}
+
+model RecoupmentBalance {
+  id             String @id @default(cuid())
+  publisherId    String
+  advanceBalance Float
+
+  publisher Publisher @relation(fields: [publisherId], references: [id])
+
+  updatedAt DateTime @updatedAt
+}
+
+//////////////////////////////////////////////////////
+// REPORTS / FILE UPLOADS
+//////////////////////////////////////////////////////
+
+model Report {
+  id       String       @id @default(cuid())
+  tenantId String
+  filename String
+  month    String
+  status   ReportStatus
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+//////////////////////////////////////////////////////
+// ATTACHMENTS (GENERIC)
+//////////////////////////////////////////////////////
+
+model Attachment {
+  id       String @id @default(cuid())
+  fileName String
+  fileUrl  String
+
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id])
+
+  soundRecordingId String?
+  licenseId        String?
+
+  soundRecording SoundRecording? @relation(fields: [soundRecordingId], references: [id])
+  license        License?        @relation(fields: [licenseId], references: [id])
+
+  uploadedAt DateTime @default(now())
+}
+
+
+//////////////////////////////////////////////////////
+// import 
+//////////////////////////////////////////////////////
+
+
+model ImportJob {
+  id            String   @id @default(cuid())
+  tenantId      String
+  importType    String
+  status        String
+  totalRows     Int      @default(0)
+  successRows   Int      @default(0)
+  failedRows    Int      @default(0)
+  errorReport   Json?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
