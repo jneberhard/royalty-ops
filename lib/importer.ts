@@ -21,7 +21,7 @@ import {
   importAttachments,
 } from "@/prisma/import-functions"; // we split your big importer into functions
 
-export async function runImporterForTable(table: string, rows: any[]) {
+export async function runImporterForTable(table: string, rows: Record<string, unknown>[]) {
   switch (table) {
     case "tenants":
       return importTenants(rows);

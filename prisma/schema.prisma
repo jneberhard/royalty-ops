@@ -4,8 +4,8 @@
 
 generator client {
   provider = "prisma-client-js"
-  output   = "../node_modules/.prisma/client"
 }
+
 
 datasource db {
   provider = "postgresql"
@@ -415,13 +415,14 @@ model LedgerEntry {
 
 model RecoupmentBalance {
   id             String @id @default(cuid())
-  publisherId    String
+  publisherId    String @unique
   advanceBalance Float
 
   publisher Publisher @relation(fields: [publisherId], references: [id])
 
   updatedAt DateTime @updatedAt
 }
+
 
 //////////////////////////////////////////////////////
 // REPORTS / FILE UPLOADS
@@ -476,6 +477,7 @@ model ImportJob {
   successRows   Int      @default(0)
   failedRows    Int      @default(0)
   errorReport   Json?
+
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 }
