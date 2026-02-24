@@ -11,7 +11,7 @@ export default function EnterpriseDashboardLayout({
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   return (
-    <div className="h-screen flex bg-gray-50">
+    <div className="h-screen flex bg-gray-51">
 
       {/* Sidebar */}
       <aside
