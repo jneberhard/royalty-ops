@@ -1,5 +1,6 @@
 import prisma from "@/lib/prisma";
 import Link from "next/link";
+import EnterpriseDashboardLayout from "@/components/layouts/enterprise-dashboard-layout";
 
 export default async function SongsPage() {
 
@@ -34,6 +35,7 @@ export default async function SongsPage() {
   ]);
 
   return (
+    <EnterpriseDashboardLayout>
     <div className="space-y-10 text-black">
 
       {/* Header */}
@@ -145,6 +147,7 @@ export default async function SongsPage() {
 
       </div>
 
-    </div>
+      </div>
+      </EnterpriseDashboardLayout>
   );
 }

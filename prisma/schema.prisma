@@ -4,8 +4,8 @@
 
 generator client {
   provider = "prisma-client-js"
-  output   = "../node_modules/.prisma/client"
 }
+
 
 datasource db {
   provider = "postgresql"
@@ -232,7 +232,8 @@ model Song {
   title        String
   writer       String
   arranger     String?
-  artist       String
+  artistId     String?
+  artist       Artist? @relation(fields: [artistId], references: [id])
   publicDomain Boolean
   territoryId  String
   tenantId     String
@@ -346,6 +347,9 @@ model License {
   songs        LicenseSong[]
   transactions FinancialTransaction[]
   attachments  Attachment[]
+  artistId   String?
+  artist     Artist? @relation(fields: [artistId], references: [id])
+
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -415,13 +419,14 @@ model LedgerEntry {
 
 model RecoupmentBalance {
   id             String @id @default(cuid())
-  publisherId    String
+  publisherId    String @unique
   advanceBalance Float
 
   publisher Publisher @relation(fields: [publisherId], references: [id])
 
   updatedAt DateTime @updatedAt
 }
+
 
 //////////////////////////////////////////////////////
 // REPORTS / FILE UPLOADS
@@ -476,6 +481,21 @@ model ImportJob {
   successRows   Int      @default(0)
   failedRows    Int      @default(0)
   errorReport   Json?
+
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+}
+
+//////////////////////////////////////////////////////
+// Artist
+//////////////////////////////////////////////////////
+
+model Artist {
+  id        String   @id @default(cuid())
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  songs     Song[]
+  licenses  License[]
 }

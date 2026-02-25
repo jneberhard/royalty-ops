@@ -1,0 +1,7 @@
+export enum ImportJobStatus {
+  UPLOADED = "UPLOADED",
+  VALIDATING = "VALIDATING",
+  PROCESSING = "PROCESSING",
+  COMPLETED = "COMPLETED",
+  FAILED = "FAILED",
+}

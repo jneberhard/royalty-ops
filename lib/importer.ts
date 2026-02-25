@@ -19,50 +19,80 @@ import {
   importSubLabels,
   importReports,
   importAttachments,
-} from "@/prisma/import-functions"; // we split your big importer into functions
+} from "@/prisma/import-functions";
 
-export async function runImporterForTable(table: string, rows: any[]) {
+type CsvRow = Record<string, string>;
+
+export async function runImporterForTable(
+  tenantId: string,
+  table: string,
+  rows: CsvRow[]
+) {
+  if (!rows?.length) {
+    return { success: true, errors: [] };
+  }
+
   switch (table) {
     case "tenants":
-      return importTenants(rows);
+      return importTenants(tenantId, rows);
+
     case "currencies":
-      return importCurrencies(rows);
+      return importCurrencies(tenantId, rows);
+
     case "territories":
-      return importTerritories(rows);
+      return importTerritories(tenantId, rows);
+
     case "publishers":
-      return importPublishers(rows);
+      return importPublishers(tenantId, rows);
+
     case "songs":
-      return importSongs(rows);
+      return importSongs(tenantId, rows);
+
     case "song_publishers":
-      return importSongPublishers(rows);
+      return importSongPublishers(tenantId, rows);
+
     case "sound_recordings":
-      return importSoundRecordings(rows);
+      return importSoundRecordings(tenantId, rows);
+
     case "sound_recording_artists":
-      return importSoundRecordingArtists(rows);
+      return importSoundRecordingArtists(tenantId, rows);
+
     case "licenses":
-      return importLicenses(rows);
+      return importLicenses(tenantId, rows);
+
     case "license_songs":
-      return importLicenseSongs(rows);
+      return importLicenseSongs(tenantId, rows);
+
     case "license_publishers":
-      return importLicensePublishers(rows);
+      return importLicensePublishers(tenantId, rows);
+
     case "configuration_types":
-      return importConfigurationTypes(rows);
+      return importConfigurationTypes(tenantId, rows);
+
     case "products":
-      return importProducts(rows);
+      return importProducts(tenantId, rows);
+
     case "financial_transactions":
-      return importFinancialTransactions(rows);
+      return importFinancialTransactions(tenantId, rows);
+
     case "ledger_entries":
-      return importLedgerEntries(rows);
+      return importLedgerEntries(tenantId, rows);
+
     case "recoupment_balances":
-      return importRecoupmentBalances(rows);
+      return importRecoupmentBalances(tenantId, rows);
+
     case "companies":
-      return importCompanies(rows);
+      return importCompanies(tenantId, rows);
+
     case "sublabels":
-      return importSubLabels(rows);
+      return importSubLabels(tenantId, rows);
+
     case "reports":
-      return importReports(rows);
+      return importReports(tenantId, rows);
+
     case "attachments":
-      return importAttachments(rows);
+      return importAttachments(tenantId, rows);
+
     default:
       throw new Error(`Unknown table: ${table}`);
   }
