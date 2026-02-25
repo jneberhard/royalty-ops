@@ -12,15 +12,35 @@ type LedgerSearchParams = {
 };
 
 /* -----------------------------
-   Helper Types (No Prisma import needed)
+   Final, warning‑free types
 ------------------------------ */
-type LedgerEntryWithPublisher = Awaited<
-  ReturnType<typeof prisma.ledgerEntry.findMany>
->[number];
 
-type RecoupmentBalanceWithPublisher = Awaited<
-  ReturnType<typeof prisma.recoupmentBalance.findMany>
->[number];
+// Matches prisma.recoupmentBalance.findMany({ include: { publisher: true } })
+type RecoupmentBalanceWithPublisher = {
+  id: string;
+  publisherId: string;
+  advanceBalance: number;
+  updatedAt: Date;
+  publisher: {
+    id: string;
+    name: string;
+  };
+};
+
+// Matches prisma.ledgerEntry.findMany({ include: { publisher: true } })
+type LedgerEntryWithPublisher = {
+  id: string;
+  publisherId: string | null;
+  description: string | null;
+  debit: number;
+  credit: number;
+  balanceAfter: number;
+  createdAt: Date;
+  publisher: {
+    id: string;
+    name: string;
+  } | null;
+};
 
 export default async function LedgerDashboardPage({
   searchParams,
@@ -68,7 +88,7 @@ export default async function LedgerDashboardPage({
       orderBy: { [sortField]: sortOrder },
       skip,
       take: pageSize,
-    }),
+    }) as Promise<LedgerEntryWithPublisher[]>,
 
     prisma.ledgerEntry.count({
       where: {
@@ -83,7 +103,7 @@ export default async function LedgerDashboardPage({
 
     prisma.recoupmentBalance.findMany({
       include: { publisher: true },
-    }),
+    }) as Promise<RecoupmentBalanceWithPublisher[]>,
 
     prisma.ledgerEntry.aggregate({ _sum: { debit: true } }),
     prisma.ledgerEntry.aggregate({ _sum: { credit: true } }),
@@ -154,7 +174,7 @@ export default async function LedgerDashboardPage({
           </thead>
 
           <tbody>
-            {publisherBalances.map((balance: RecoupmentBalanceWithPublisher) => (
+            {publisherBalances.map((balance) => (
               <tr key={balance.id} className="border-b last:border-none">
                 <td className="p-4">{balance.publisher.name}</td>
                 <td className="text-right p-4 font-medium">
@@ -193,7 +213,7 @@ export default async function LedgerDashboardPage({
           </thead>
 
           <tbody>
-            {ledgerEntries.map((entry: LedgerEntryWithPublisher) => (
+            {ledgerEntries.map((entry) => (
               <tr key={entry.id} className="border-b last:border-none">
                 <td className="p-4">{entry.createdAt.toLocaleDateString()}</td>
                 <td>{entry.publisher?.name ?? "System"}</td>
