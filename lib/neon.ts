@@ -2,7 +2,7 @@ import ws from "ws";
 import { neonConfig } from "@neondatabase/serverless";
 
 if (!globalThis.WebSocket) {
-  globalThis.WebSocket = ws as any;
+  globalThis.WebSocket = ws as unknown as typeof WebSocket;
 }
 
 neonConfig.webSocketConstructor = ws;

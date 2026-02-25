@@ -1,21 +1,23 @@
 import { PrismaClient } from "@prisma/client";
 import { PrismaNeon } from "@prisma/adapter-neon";
-import { neon } from "@neondatabase/serverless";
+import { neonConfig } from "@neondatabase/serverless";
 
-const globalForPrisma = global as unknown as {
+neonConfig.fetchConnectionCache = true;
+
+const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
 };
 
 const connectionString = process.env.DATABASE_URL!;
 
-const sql = neon(connectionString);
-const adapter = new PrismaNeon(sql);
-
-export const prisma =
+const prisma =
   globalForPrisma.prisma ??
   new PrismaClient({
-    adapter,
-    log: ["error", "warn"],
+    adapter: new PrismaNeon(connectionString),
+    log:
+      process.env.NODE_ENV === "production"
+        ? ["error"]
+        : ["query", "error", "warn"],
   });
 
 if (process.env.NODE_ENV !== "production") {

@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prisma";
+import prisma  from "@/lib/prisma";
 import { PayeeType } from "@prisma/client";
 
 type CsvRow = Record<string, string>;
