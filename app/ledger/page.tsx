@@ -74,6 +74,12 @@ export default async function LedgerDashboardPage({
     publisherBalances,
     totalDebits,
     totalCredits,
+  ]: [
+    LedgerEntryWithPublisher[],
+    number,
+    RecoupmentBalanceWithPublisher[],
+    { _sum: { debit: number | null } },
+    { _sum: { credit: number | null } }
   ] = await Promise.all([
     prisma.ledgerEntry.findMany({
       where: {
@@ -88,7 +94,7 @@ export default async function LedgerDashboardPage({
       orderBy: { [sortField]: sortOrder },
       skip,
       take: pageSize,
-    }) as Promise<LedgerEntryWithPublisher[]>,
+    }),
 
     prisma.ledgerEntry.count({
       where: {
@@ -103,7 +109,7 @@ export default async function LedgerDashboardPage({
 
     prisma.recoupmentBalance.findMany({
       include: { publisher: true },
-    }) as Promise<RecoupmentBalanceWithPublisher[]>,
+    }),
 
     prisma.ledgerEntry.aggregate({ _sum: { debit: true } }),
     prisma.ledgerEntry.aggregate({ _sum: { credit: true } }),
