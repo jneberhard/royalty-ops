@@ -4,15 +4,15 @@ import EnterpriseDashboardLayout from "@/components/layouts/enterprise-dashboard
 
 export const dynamic = "force-dynamic";
 
+// Move the type export up here
+const artistsQuery = prisma.artist.findMany({
+  orderBy: { name: "asc" },
+});
+
+export type ArtistType = Awaited<typeof artistsQuery>[number];
+
 export default async function ArtistsPage() {
-  const artistsQuery = prisma.artist.findMany({
-    orderBy: { name: "asc" },
-  });
-
   const artists = await artistsQuery;
-
-  // Export the inferred type for the table
-  export type ArtistType = Awaited<typeof artistsQuery>[number];
 
   return (
     <EnterpriseDashboardLayout>
