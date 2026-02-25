@@ -109,6 +109,7 @@ export default async function LedgerDashboardPage({
     prisma.ledgerEntry.aggregate({ _sum: { credit: true } }),
   ]);
 
+
   const totalPages = Math.ceil(totalCount / pageSize);
   const debitTotal = totalDebits._sum.debit ?? 0;
   const creditTotal = totalCredits._sum.credit ?? 0;
