@@ -1,51 +1,47 @@
 import prisma from "@/lib/prisma";
 import Link from "next/link";
-import { Prisma } from "@prisma/client";
 
-type LicenseWithRelations = Prisma.LicenseGetPayload<{
+// Infer the correct type directly from the query
+const licenseQuery = prisma.license.findMany({
   include: {
-    territory: true;
+    territory: true,
     publishers: {
       include: {
-        publisher: true;
-      };
-    };
-    transactions: true;
-  };
-}>;
+        publisher: true,
+      },
+    },
+    transactions: true,
+  },
+  orderBy: {
+    createdAt: "desc",
+  },
+});
+
+// Extract the element type of the array returned by findMany()
+type LicenseWithRelations = Awaited<typeof licenseQuery>[number];
 
 export default async function LicensesPage() {
+  const [
+    licenses,
+    activeCount,
+    pendingCount,
+    totalRoyaltyLiability,
+  ] = await Promise.all([
+    licenseQuery as Promise<LicenseWithRelations[]>, // fully typed
 
-  const [licenses, activeCount, pendingCount, totalRoyaltyLiability] =
-    await Promise.all([
-      prisma.license.findMany({
-        include: {
-          territory: true,
-          publishers: {
-            include: {
-              publisher: true,
-            },
-          },
-          transactions: true,
-        },
-        orderBy: {
-          createdAt: "desc",
-        },
-      }) as Promise<LicenseWithRelations[]>,
+    prisma.license.count({
+      where: { status: "ACTIVE" },
+    }),
 
-      prisma.license.count({
-        where: { status: "ACTIVE" },
-      }),
+    prisma.license.count({
+      where: { status: "PENDING" },
+    }),
 
-      prisma.license.count({
-        where: { status: "PENDING" },
-      }),
-
-      prisma.financialTransaction.aggregate({
-        _sum: { amount: true },
-        where: { status: "PENDING" },
-      }),
-    ]);
+    prisma.financialTransaction.aggregate({
+      _sum: { amount: true },
+      where: { status: "PENDING" },
+    }),
+  ]);
 
   return (
     <div className="space-y-10 text-black">
@@ -114,10 +110,9 @@ export default async function LicensesPage() {
           </thead>
 
           <tbody>
-            {licenses.map((license: LicenseWithRelations) => {
-
+            {licenses.map((license) => {
               const exposure = license.transactions
-                .filter(t => t.status === "PENDING")
+                .filter((t) => t.status === "PENDING")
                 .reduce((sum, t) => sum + (t.amount ?? 0), 0);
 
               return (
