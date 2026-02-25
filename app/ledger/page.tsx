@@ -1,9 +1,8 @@
 import prisma from "@/lib/prisma";
 import Link from "next/link";
-import { Prisma } from "@prisma/client";
 
 /* -----------------------------
-   Search Param Type (Fixes "any")
+   Search Param Type
 ------------------------------ */
 type LedgerSearchParams = {
   page?: string;
@@ -11,6 +10,17 @@ type LedgerSearchParams = {
   order?: string;
   publisher?: string;
 };
+
+/* -----------------------------
+   Helper Types (No Prisma import needed)
+------------------------------ */
+type LedgerEntryWithPublisher = Awaited<
+  ReturnType<typeof prisma.ledgerEntry.findMany>
+>[number];
+
+type RecoupmentBalanceWithPublisher = Awaited<
+  ReturnType<typeof prisma.recoupmentBalance.findMany>
+>[number];
 
 export default async function LedgerDashboardPage({
   searchParams,
@@ -58,9 +68,7 @@ export default async function LedgerDashboardPage({
       orderBy: { [sortField]: sortOrder },
       skip,
       take: pageSize,
-    }) as Promise<
-      Prisma.LedgerEntryGetPayload<{ include: { publisher: true } }>[]
-    >,
+    }),
 
     prisma.ledgerEntry.count({
       where: {
@@ -75,9 +83,7 @@ export default async function LedgerDashboardPage({
 
     prisma.recoupmentBalance.findMany({
       include: { publisher: true },
-    }) as Promise<
-      Prisma.RecoupmentBalanceGetPayload<{ include: { publisher: true } }>[]
-    >,
+    }),
 
     prisma.ledgerEntry.aggregate({ _sum: { debit: true } }),
     prisma.ledgerEntry.aggregate({ _sum: { credit: true } }),
@@ -148,7 +154,7 @@ export default async function LedgerDashboardPage({
           </thead>
 
           <tbody>
-            {publisherBalances.map((balance) => (
+            {publisherBalances.map((balance: RecoupmentBalanceWithPublisher) => (
               <tr key={balance.id} className="border-b last:border-none">
                 <td className="p-4">{balance.publisher.name}</td>
                 <td className="text-right p-4 font-medium">
@@ -187,7 +193,7 @@ export default async function LedgerDashboardPage({
           </thead>
 
           <tbody>
-            {ledgerEntries.map((entry) => (
+            {ledgerEntries.map((entry: LedgerEntryWithPublisher) => (
               <tr key={entry.id} className="border-b last:border-none">
                 <td className="p-4">{entry.createdAt.toLocaleDateString()}</td>
                 <td>{entry.publisher?.name ?? "System"}</td>
