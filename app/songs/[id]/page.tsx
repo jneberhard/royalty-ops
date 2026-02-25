@@ -1,5 +1,6 @@
 import prisma from "@/lib/prisma";
 import Link from "next/link";
+import EnterpriseDashboardLayout from "@/components/layouts/enterprise-dashboard-layout";
 
 export default async function SongDetailPage({
   params
@@ -55,6 +56,7 @@ export default async function SongDetailPage({
   const totalRevenue = revenue._sum.amount ?? 0;
 
   return (
+    <EnterpriseDashboardLayout>
     <div className="space-y-10">
 
       {/* Header */}
@@ -193,6 +195,7 @@ export default async function SongDetailPage({
 
       </div>
 
-    </div>
+      </div>
+      </EnterpriseDashboardLayout>
   );
 }
