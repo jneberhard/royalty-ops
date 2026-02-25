@@ -2,53 +2,44 @@ import prisma from "@/lib/prisma";
 import Link from "next/link";
 
 export default async function LicensesPage() {
-
-  const [
-    licenses,
-    activeCount,
-    pendingCount,
-    totalRoyaltyLiability
-  ] = await Promise.all([
-    prisma.license.findMany({
-      include: {
-        territory: true,
-        publishers: {
-          include: {
-            publisher: true
-          }
+  // Fetch licenses with relations
+  const licenses = await prisma.license.findMany({
+    include: {
+      territory: true,
+      publishers: {
+        include: {
+          publisher: true,
         },
-        transactions: true
       },
-      orderBy: {
-        createdAt: "desc"
-      }
-    }),
+      transactions: true,
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
 
-    prisma.license.count({
-      where: { status: "ACTIVE" }
-    }),
+  // KPI Metrics
+  const activeCount = await prisma.license.count({
+    where: { status: "ACTIVE" },
+  });
 
-    prisma.license.count({
-      where: { status: "PENDING" }
-    }),
+  const pendingCount = await prisma.license.count({
+    where: { status: "PENDING" },
+  });
 
-    prisma.financialTransaction.aggregate({
-      _sum: {
-        amount: true
-      },
-      where: {
-        status: "PENDING"
-      }
-    })
-  ]);
+  const totalRoyaltyLiability = await prisma.financialTransaction.aggregate({
+    _sum: { amount: true },
+    where: { status: "PENDING" },
+  });
 
   return (
     <div className="space-y-10 text-black">
-
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-white">License Management</h1>
+          <h1 className="text-3xl font-bold text-white">
+            License Management
+          </h1>
           <p className="text-gray-300">
             Enterprise royalty contract tracking
           </p>
@@ -64,7 +55,6 @@ export default async function LicensesPage() {
 
       {/* KPI Metrics */}
       <div className="grid md:grid-cols-3 gap-6">
-
         <div className="bg-white p-6 rounded-xl shadow-sm">
           <p className="text-sm text-gray-500">Active Licenses</p>
           <h2 className="text-3xl font-bold text-green-600">
@@ -83,13 +73,11 @@ export default async function LicensesPage() {
           <p className="text-sm text-gray-500">
             Royalty Liability Exposure
           </p>
-
           <h2 className="text-3xl font-bold text-red-600">
             $
             {totalRoyaltyLiability._sum.amount?.toLocaleString() ?? "0"}
           </h2>
         </div>
-
       </div>
 
       {/* License Table */}
@@ -107,11 +95,10 @@ export default async function LicensesPage() {
           </thead>
 
           <tbody>
-            {licenses.map(license => {
-
+            {licenses.map((license) => {
               const exposure = license.transactions
-                .filter(t => t.status === "PENDING")
-                .reduce((sum, t) => sum + t.amount, 0);
+                .filter((t) => t.status === "PENDING")
+                .reduce((sum, t) => sum + (t.amount ?? 0), 0);
 
               return (
                 <tr
@@ -165,7 +152,6 @@ export default async function LicensesPage() {
           </tbody>
         </table>
       </div>
-
     </div>
   );
 }
