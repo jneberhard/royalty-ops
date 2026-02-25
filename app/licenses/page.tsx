@@ -1,39 +1,55 @@
 import prisma from "@/lib/prisma";
 import Link from "next/link";
+import { Prisma } from "@prisma/client";
+
+type LicenseWithRelations = Prisma.LicenseGetPayload<{
+  include: {
+    territory: true;
+    publishers: {
+      include: {
+        publisher: true;
+      };
+    };
+    transactions: true;
+  };
+}>;
 
 export default async function LicensesPage() {
-  // Fetch licenses with relations
-  const licenses = await prisma.license.findMany({
-    include: {
-      territory: true,
-      publishers: {
+
+  const [licenses, activeCount, pendingCount, totalRoyaltyLiability] =
+    await Promise.all([
+      prisma.license.findMany({
         include: {
-          publisher: true,
+          territory: true,
+          publishers: {
+            include: {
+              publisher: true,
+            },
+          },
+          transactions: true,
         },
-      },
-      transactions: true,
-    },
-    orderBy: {
-      createdAt: "desc",
-    },
-  });
+        orderBy: {
+          createdAt: "desc",
+        },
+      }) as Promise<LicenseWithRelations[]>,
 
-  // KPI Metrics
-  const activeCount = await prisma.license.count({
-    where: { status: "ACTIVE" },
-  });
+      prisma.license.count({
+        where: { status: "ACTIVE" },
+      }),
 
-  const pendingCount = await prisma.license.count({
-    where: { status: "PENDING" },
-  });
+      prisma.license.count({
+        where: { status: "PENDING" },
+      }),
 
-  const totalRoyaltyLiability = await prisma.financialTransaction.aggregate({
-    _sum: { amount: true },
-    where: { status: "PENDING" },
-  });
+      prisma.financialTransaction.aggregate({
+        _sum: { amount: true },
+        where: { status: "PENDING" },
+      }),
+    ]);
 
   return (
     <div className="space-y-10 text-black">
+
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
@@ -55,6 +71,7 @@ export default async function LicensesPage() {
 
       {/* KPI Metrics */}
       <div className="grid md:grid-cols-3 gap-6">
+
         <div className="bg-white p-6 rounded-xl shadow-sm">
           <p className="text-sm text-gray-500">Active Licenses</p>
           <h2 className="text-3xl font-bold text-green-600">
@@ -73,11 +90,13 @@ export default async function LicensesPage() {
           <p className="text-sm text-gray-500">
             Royalty Liability Exposure
           </p>
+
           <h2 className="text-3xl font-bold text-red-600">
             $
             {totalRoyaltyLiability._sum.amount?.toLocaleString() ?? "0"}
           </h2>
         </div>
+
       </div>
 
       {/* License Table */}
@@ -95,9 +114,10 @@ export default async function LicensesPage() {
           </thead>
 
           <tbody>
-            {licenses.map((license) => {
+            {licenses.map((license: LicenseWithRelations) => {
+
               const exposure = license.transactions
-                .filter((t) => t.status === "PENDING")
+                .filter(t => t.status === "PENDING")
                 .reduce((sum, t) => sum + (t.amount ?? 0), 0);
 
               return (
@@ -146,12 +166,14 @@ export default async function LicensesPage() {
                       Details →
                     </Link>
                   </td>
+
                 </tr>
               );
             })}
           </tbody>
         </table>
       </div>
+
     </div>
   );
 }
